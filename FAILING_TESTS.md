@@ -4,7 +4,9 @@
 
 **Last Updated:** January 5, 2026
 
-This document catalogs all failing Unicode line break test cases and explains why they fail. These failures are expected during the line breaking refactoring from the legacy state machine to the new context-based system.
+**System Status:** All line breaking (public API and internal) now uses the unified context-based system (`linecontext.go`). The legacy state machine (`linerules.go`) is deprecated.
+
+This document catalogs all failing Unicode line break test cases and explains why they fail.
 
 ---
 
@@ -12,7 +14,7 @@ This document catalogs all failing Unicode line break test cases and explains wh
 
 | Category | Count | Priority |
 |----------|-------|----------|
-| Quotation Mark Handling | 11 | High |
+| Quotation Mark Handling | 12 | High |
 | Hyphen + Letter Combinations | 4 | High |
 | Numeric Sequences | 3 | Medium |
 | Emoji with Modifiers | 2 | Medium |
@@ -25,7 +27,7 @@ This document catalogs all failing Unicode line break test cases and explains wh
 
 ## Detailed Test Case Analysis
 
-### 1. Quotation Mark Handling (11 cases)
+### 1. Quotation Mark Handling (12 cases)
 
 #### Issue: Opening Quotation Marks Not Staying With Content
 
@@ -71,6 +73,10 @@ This document catalogs all failing Unicode line break test cases and explains wh
 - **19323:** `"哪个商标以人名为名，因特色小吃"五台杂烩汤"而入选"新疆老字号"？"`
   - Got: 24 segments | Expected: 27
   - Problem: Multiple Chinese quote pairs
+
+- **19326:** `"Z-1"莱贝雷希特·马斯"号是德国国家海军暨战争海军于1930年代"`
+  - Got: 24 segments | Expected: 25
+  - Problem: German ship name with Chinese quotation marks (Latin-to-CJK transition)
 
 - **19327:** `"Anmerkung: „White" bzw. ‚白人' – in der Amtlichen Statistik"`
   - Got: 8 segments | Expected: 10
@@ -352,8 +358,9 @@ The handling of directional formatting characters interacting with hyphens and H
 - All grapheme, word, and sentence boundary tests pass ✅
 - Step and width tests pass ✅  
 - Only line breaking tests have failures
-- Failures are concentrated in the new context-based system
-- The legacy line breaking system may have different results
+- All line breaking now uses the unified context-based system
+- Legacy `transitionLineBreakState` in `linerules.go` is deprecated
+- Each failing test has a corresponding GitHub issue (#1-#30)
 
 ---
 
