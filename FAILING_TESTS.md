@@ -1,8 +1,11 @@
 # Failing Line Break Tests Analysis
 
-**Status:** 30 out of 19,338 tests failing (99.84% pass rate)
+**Status:** 26 out of 19,338 tests failing (99.87% pass rate)
 
 **Last Updated:** January 5, 2026
+
+**Recent Fixes:**
+- ✅ LB20a word-initial hyphen rule (4 tests fixed: 19318, 19319, 19330, 19332)
 
 **System Status:** All line breaking (public API and internal) now uses the unified context-based system (`linecontext.go`). The legacy state machine (`linerules.go`) is deprecated.
 
@@ -15,12 +18,12 @@ This document catalogs all failing Unicode line break test cases and explains wh
 | Category | Count | Priority |
 |----------|-------|----------|
 | Quotation Mark Handling | 12 | High |
-| Hyphen + Letter Combinations | 4 | High |
+| ~~Hyphen + Letter Combinations~~ | ~~4~~ → 0 | ✅ Fixed |
 | Numeric Sequences | 3 | Medium |
 | Emoji with Modifiers | 2 | Medium |
 | Parentheses/Braces with Operators | 4 | Medium |
 | Southeast Asian Scripts | 1 | Medium |
-| Hebrew/Akkadian Text | 3 | Medium |
+| Hebrew/Akkadian Text | 2 | Medium |
 | RTL/LTR Directional Marks | 2 | Low |
 
 ---
@@ -98,52 +101,13 @@ The current implementation in `linecontext.go` (lines 359-375) treats all QU uni
 
 ---
 
-### 2. Hyphen + Letter Combinations (4 cases)
+### 2. ~~Hyphen + Letter Combinations~~ ✅ FIXED
 
-#### Issue: LB20.1 Rule Not Applied Beyond Start-of-Text
+**Status:** All 4 tests now passing (fixed in commit f55122f)
 
-**Related Unicode Rules:** LB20.1, LB21
+**Fixed Tests:** 19318, 19319, 19330, 19332
 
-**Test Cases:**
-- **19318:** `"the 3ms possessive pronominal suffix ( -šu )"`
-  - Got: 7 segments | Expected: 6
-  - Problem: Space + hyphen + letter should stay together in parentheses
-  
-- **19319:** `"Mac Pro -tietokone"`
-  - Got: 4 segments | Expected: 3
-  - Problem: Space + hyphen + word breaking incorrectly
-
-- **19330:** `"the Akkadian suffix -ī"`
-  - Got: 5 segments | Expected: 4
-  - Problem: Hyphen + combining diacritic + letter
-
-- **19332:** `"the Hebrew suffix \u200f -י"`
-  - Got: 6 segments | Expected: 5
-  - Problem: RTL mark + space + hyphen + Hebrew letter
-
-**Root Cause:**
-
-LB20.1 states: `(HY|HH) × (AL|HL)` - don't break between hyphen and following letter. This is meant to handle "word-initial hyphens" like:
-- `-word` at start of line
-- `( -suffix )` in parentheses
-- `text -continuation` after space
-
-The current implementation (`linecontext.go` lines 377-392) only applies this rule at Start-of-Text (SOT):
-
-```go
-if ctx.Flags&lbCtxSot != 0 && ctx.State == lbcHY {
-    if prop == prAL || prop == prHL {
-        // Don't break
-    }
-}
-```
-
-However, LB20.1 should apply whenever a hyphen appears after a space or at the start of a "word boundary", not just at absolute SOT.
-
-**Fix Strategy:**
-1. Track "word-like boundaries" (after SP, after OP, etc.)
-2. Apply LB20.1 when hyphen follows space/open-paren
-3. Handle RTL marks + spaces correctly before hyphens
+**Solution:** Added `lbCtxWordStart` flag to track word-initial hyphen positions. The LB20a rule now correctly applies when HY/HH follows any of: sot, BK, CR, LF, NL, SP (including SP-derived states), ZW, CB, GL.
 
 ---
 
