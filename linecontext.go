@@ -31,6 +31,10 @@ const (
 	// After space following QU_Pi (for LB15.1: sot (QU_Pi SP*)+ × OP)
 	lbCtxQUPiSP = 1 << 2
 
+	// Word-initial position for LB20a: (sot|BK|CR|LF|NL|SP|ZW|CB|GL)(HY|HH)×(AL|HL)
+	// Set when HY/HH follows one of the allowed predecessor classes
+	lbCtxWordStart = 1 << 3
+
 	// After ZWJ (for emoji sequences)
 	lbCtxAfterZWJ = 1 << 4
 
@@ -376,15 +380,17 @@ func transitionLineBreakContext(ctx LineContext, r rune, b []byte, str string) (
 
 	// === WORD-INITIAL HYPHENS (LB20a) ===
 
-	// LB20.1: (HY|HH) × (AL|HL) - don't break after hyphen before letters
-	// HH × (AL|HL) always applies, but HY × (AL|HL) only at SOT
+	// LB20a: (sot|BK|CR|LF|NL|SP|ZW|CB|GL)(HY|HH) × (AL|HL)
+	// Don't break after word-initial hyphen before letters
+	// HH × (AL|HL) always applies (unambiguous hyphen)
+	// HY × (AL|HL) only at word-initial position (tracked by lbCtxWordStart)
 	if ctx.State == lbcHH {
 		if prop == prAL || prop == prHL {
 			newCtx := nextContext(ctx, propToState(prop), prop, r, genCat)
 			return newCtx, LineDontBreak
 		}
 	}
-	if ctx.Flags&lbCtxSot != 0 && ctx.State == lbcHY {
+	if ctx.Flags&lbCtxWordStart != 0 && ctx.State == lbcHY {
 		if prop == prAL || prop == prHL {
 			newCtx := nextContext(ctx, propToState(prop), prop, r, genCat)
 			return newCtx, LineDontBreak
@@ -699,6 +705,30 @@ func nextContext(ctx LineContext, newState, prop int, r rune, genCat int) LineCo
 		} else {
 			newCtx.Flags &^= lbCtxCPeaFWH
 		}
+	}
+
+	// Track word-initial position for LB20a
+	// LB20a: (sot|BK|CR|LF|NL|SP|ZW|CB|GL)(HY|HH) × (AL|HL)
+	// Set flag when HY/HH follows one of the allowed predecessor classes
+	if prop == prHY || prop == prHH {
+		// Check if previous state was one of the allowed predecessors
+		// Note: SP includes all SP-derived states (OPSP, QUSP, etc.) because
+		// the previous CHARACTER was still a space
+		isSpaceLike := ctx.State == lbcSP || ctx.State == lbcOPSP ||
+			ctx.State == lbcQUSP || ctx.State == lbcQUPiSP ||
+			ctx.State == lbcB2SP || ctx.State == lbcCLCP || ctx.State == lbcZWSP
+		prevAllowed := ctx.Flags&lbCtxSot != 0 ||
+			ctx.State == lbcBK || ctx.State == lbcCR || ctx.State == lbcLF ||
+			ctx.State == lbcNL || ctx.State == lbcZW || ctx.State == lbcCB ||
+			ctx.State == lbcGL || isSpaceLike
+		if prevAllowed {
+			newCtx.Flags |= lbCtxWordStart
+		} else {
+			newCtx.Flags &^= lbCtxWordStart
+		}
+	} else {
+		// Clear the flag for non-hyphen characters
+		newCtx.Flags &^= lbCtxWordStart
 	}
 
 	return newCtx
