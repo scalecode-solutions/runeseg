@@ -158,4 +158,3 @@ func translateInCBValue(value string) string {
 		return "prInCBNone"
 	}
 }
-

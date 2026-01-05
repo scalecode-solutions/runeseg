@@ -76,10 +76,10 @@ const (
 	lbcB2
 	lbcRI
 	lbcZWJ
-	lbcCM // Combining mark (when not absorbed)
-	lbcAK // Aksara (Unicode 17)
-	lbcAP // Aksara_Prebase
-	lbcAS // Aksara_Start
+	lbcCM   // Combining mark (when not absorbed)
+	lbcAK   // Aksara (Unicode 17)
+	lbcAP   // Aksara_Prebase
+	lbcAS   // Aksara_Start
 	lbcVI   // Virama
 	lbcVF   // Virama_Final
 	lbcAKVI // (AK|AS|DottedCircle) followed by VI (for LB28.13)
@@ -93,18 +93,18 @@ const (
 	lbcH3 // Hangul LVT syllable
 
 	// Special states for multi-character sequences
-	lbcRIOdd       // Odd number of RI
-	lbcRIEven      // Even number of RI
-	lbcB2SP        // B2 followed by SP
-	lbcCLCP        // Close followed by SP (for LB13)
-	lbcQUSP        // QU followed by SP
-	lbcOPSP        // OP followed by SP (for LB14)
-	lbcQUPi        // QU with Pi (initial quotation)
-	lbcQUPiSP      // QU_Pi followed by SP
-	lbcZWSP        // ZW followed by SP (for LB8)
-	lbcHLHY        // HL followed by HY (for LB21a)
-	lbcSotHY       // HY at start of text (for LB20a)
-	lbcSotHH       // HH at start of text (for LB20a)
+	lbcRIOdd        // Odd number of RI
+	lbcRIEven       // Even number of RI
+	lbcB2SP         // B2 followed by SP
+	lbcCLCP         // Close followed by SP (for LB13)
+	lbcQUSP         // QU followed by SP
+	lbcOPSP         // OP followed by SP (for LB14)
+	lbcQUPi         // QU with Pi (initial quotation)
+	lbcQUPiSP       // QU_Pi followed by SP
+	lbcZWSP         // ZW followed by SP (for LB8)
+	lbcHLHY         // HL followed by HY (for LB21a)
+	lbcSotHY        // HY at start of text (for LB20a)
+	lbcSotHH        // HH at start of text (for LB20a)
 	lbcDottedCircle // Dotted Circle (U+25CC) - acts like AL but also like AK for Aksara
 	lbcBB           // Break Before class
 
@@ -175,14 +175,14 @@ func transitionLineBreakContext(ctx LineContext, r rune, b []byte, str string) (
 
 	// === COMBINING MARKS (LB9-LB10) - Must come before mandatory breaks ===
 	// This is critical: CM/ZWJ after mandatory break states should be treated as AL
-	
+
 	if prop == prCM || prop == prZWJ {
 		// LB9: Don't break before CM/ZWJ (treat X CM* as X)
 		// States where we can't attach CM (need LB10 instead)
 		isSpaceLike := ctx.State == lbcSP || ctx.State == lbcB2SP || ctx.State == lbcQUSP || ctx.State == lbcCLCP || ctx.State == lbcZWSP
 		isMandatoryBreak := ctx.State == lbcBK || ctx.State == lbcCR || ctx.State == lbcLF || ctx.State == lbcNL || ctx.State == lbcZW
 		isInitial := ctx.State == lbcAny
-		
+
 		if !isSpaceLike && !isMandatoryBreak && !isInitial {
 			// LB9: Keep current state, just update ZWJ flag if needed
 			newCtx := ctx
@@ -513,7 +513,7 @@ func transitionLineBreakContext(ctx LineContext, r rune, b []byte, str string) (
 	}
 
 	// === AKSARA (LB28a) - Unicode 17 ===
-	
+
 	// Dotted Circle (U+25CC) acts like Aksara for LB28 rules
 	isDottedCircle := r == 0x25CC
 
@@ -828,22 +828,22 @@ func applyLB28a(ctx LineContext, prop int, isDottedCircle bool) int {
 	if ctx.State == lbcAP && (prop == prAK || prop == prAS || isDottedCircle) {
 		return LineDontBreak
 	}
-	
+
 	// LB28.12: (AK | DottedCircle | AS) × (VF | VI)
 	// Note: This transitions to lbcAKVI for VI to enable LB28.13
 	if (ctx.State == lbcAK || ctx.State == lbcDottedCircle || ctx.State == lbcAS) && (prop == prVF || prop == prVI) {
 		return LineDontBreak
 	}
-	
+
 	// LB28.13: (AK | DottedCircle | AS) VI × (AK | DottedCircle | AS)
 	// Only applies when we have the full (AK|AS|◌)VI sequence (tracked by lbcAKVI)
 	if ctx.State == lbcAKVI && (prop == prAK || prop == prAS || isDottedCircle) {
 		return LineDontBreak
 	}
-	
+
 	// Note: There is NO VF × (AK...) rule in TR14 LB28a
 	// VF followed by AK should break (fall through to default)
-	
+
 	return -1
 }
 
@@ -887,4 +887,3 @@ func FirstLineSegmentContext(b []byte, state int) (segment, rest []byte, breakTy
 		}
 	}
 }
-

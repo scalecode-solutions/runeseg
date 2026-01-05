@@ -20,7 +20,8 @@ const (
 // Stored in upper bits of state to track Indic scripts like Devanagari.
 //
 // GB9c prevents breaks within conjunct clusters:
-//   InCB=Consonant [InCB=Extend|Linker]* InCB=Linker [InCB=Extend|Linker]* × InCB=Consonant
+//
+//	InCB=Consonant [InCB=Extend|Linker]* InCB=Linker [InCB=Extend|Linker]* × InCB=Consonant
 //
 // Example: क्षि (kṣi) should be kept together as one grapheme cluster.
 //

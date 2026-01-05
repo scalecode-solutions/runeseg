@@ -5,23 +5,23 @@ package runeseg
 //
 // Note: Grapheme properties come first to minimize bits in state vectors.
 const (
-	prXX      = 0    // Unknown/unassigned (same as prAny)
-	prAny     = iota // Default/any property (must be 0)
+	prXX  = 0    // Unknown/unassigned (same as prAny)
+	prAny = iota // Default/any property (must be 0)
 
 	// Grapheme Cluster Break properties (UAX #29)
-	prPrepend           // Characters that don't break before following char
-	prCR                // Carriage return
-	prLF                // Line feed
-	prControl           // Control characters
-	prExtend            // Extending characters (combining marks)
-	prRegionalIndicator // Flag emoji components (paired)
-	prSpacingMark       // Spacing combining marks
-	prL                 // Hangul leading consonant (Jamo L)
-	prV                 // Hangul vowel (Jamo V)
-	prT                 // Hangul trailing consonant (Jamo T)
-	prLV                // Hangul syllable LV
-	prLVT               // Hangul syllable LVT
-	prZWJ               // Zero Width Joiner
+	prPrepend              // Characters that don't break before following char
+	prCR                   // Carriage return
+	prLF                   // Line feed
+	prControl              // Control characters
+	prExtend               // Extending characters (combining marks)
+	prRegionalIndicator    // Flag emoji components (paired)
+	prSpacingMark          // Spacing combining marks
+	prL                    // Hangul leading consonant (Jamo L)
+	prV                    // Hangul vowel (Jamo V)
+	prT                    // Hangul trailing consonant (Jamo T)
+	prLV                   // Hangul syllable LV
+	prLVT                  // Hangul syllable LVT
+	prZWJ                  // Zero Width Joiner
 	prExtendedPictographic // Emoji and pictographic characters
 
 	// Word Break properties (UAX #29)
@@ -92,12 +92,12 @@ const (
 	prEM // Emoji Modifier
 
 	// East Asian Width properties (UAX #11)
-	prN  // Neutral
-	prNa // Narrow
-	prA  // Ambiguous
-	prW  // Wide
-	prH  // Halfwidth
-	prF  // Fullwidth
+	prN                 // Neutral
+	prNa                // Narrow
+	prA                 // Ambiguous
+	prW                 // Wide
+	prH                 // Halfwidth
+	prF                 // Fullwidth
 	prEmojiPresentation // Has emoji presentation by default
 
 	// Combined property for WB3.3: ALetter that is also Extended_Pictographic
