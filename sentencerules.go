@@ -2,12 +2,13 @@ package runeseg
 
 import "unicode/utf8"
 
-// The states of the sentence break parser.
+// States for the sentence break parser.
+// These track the parser's position within potential sentence boundaries.
 const (
-	sbAny = iota
-	sbCR
-	sbParaSep
-	sbParaSepCR // ParaSep that came from CR (for SB3: CR × LF)
+	sbAny       = iota // Default/initial state
+	sbCR               // After carriage return (for SB3)
+	sbParaSep          // After paragraph separator
+	sbParaSepCR        // ParaSep from CR - needed to correctly handle CR×LF (SB3)
 	sbATerm
 	sbUpper
 	sbLower
@@ -19,10 +20,11 @@ const (
 	sbSB8aSp
 )
 
-// sbTransitions implements the sentence break parser's state transitions. It's
-// anologous to [grTransitions], see comments there for details.
+// sbTransitions implements the sentence break parser's state transitions.
+// See [grTransitions] for details on the transition table approach.
 //
-// Unicode version 15.0.0.
+// Unicode Standard Annex #29 (https://unicode.org/reports/tr29/)
+// Unicode version 17.0.0.
 func sbTransitions(state, prop int) (newState int, sentenceBreak bool, rule int) {
 	switch uint64(state) | uint64(prop)<<32 {
 	// SB3.

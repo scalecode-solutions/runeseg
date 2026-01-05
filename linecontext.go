@@ -22,8 +22,6 @@ import "unicode/utf8"
 // Context flags for line breaking.
 // These track additional context needed for context-sensitive rules.
 const (
-	lbCtxNone = 0
-
 	// Start of text - set at beginning, cleared after first break
 	lbCtxSot = 1 << 0
 
@@ -33,17 +31,11 @@ const (
 	// After space following QU_Pi (for LB15.1: sot (QU_Pi SP*)+ × OP)
 	lbCtxQUPiSP = 1 << 2
 
-	// After opening punctuation (for LB15.1 non-sot variant)
-	lbCtxAfterOP = 1 << 3
-
 	// After ZWJ (for emoji sequences)
 	lbCtxAfterZWJ = 1 << 4
 
 	// After CP with East Asian width F/W/H (for LB30)
 	lbCtxCPeaFWH = 1 << 5
-
-	// In Aksara sequence (for LB28a)
-	lbCtxInAksara = 1 << 6
 
 	// Saw Virama in Aksara sequence
 	lbCtxAksaraVirama = 1 << 7
@@ -631,16 +623,16 @@ func transitionLineBreakContext(ctx LineContext, r rune, b []byte, str string) (
 	// LB30a: sot (RI RI)* RI × RI
 	// First RI can be broken before, second RI cannot, then break before third, etc.
 	if prop == prRI {
-		// lbcRI or lbcRIOdd both indicate odd count (1 RI seen)
-		if ctx.State == lbcRIOdd || ctx.State == lbcRI {
+		switch ctx.State {
+		case lbcRIOdd, lbcRI:
 			// We have odd number of RI, this one makes it even - no break
 			newCtx := nextContext(ctx, lbcRIEven, prop, r, genCat)
 			return newCtx, LineDontBreak
-		} else if ctx.State == lbcRIEven {
+		case lbcRIEven:
 			// We have even number of RI, this one makes it odd - can break
 			newCtx := nextContext(ctx, lbcRIOdd, prop, r, genCat)
 			return newCtx, LineCanBreak
-		} else {
+		default:
 			// First RI - can break before it (LB31), then track as odd
 			newCtx := nextContext(ctx, lbcRIOdd, prop, r, genCat)
 			return newCtx, LineCanBreak

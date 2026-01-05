@@ -1,109 +1,94 @@
 /*
-Package uniseg implements Unicode Text Segmentation, Unicode Line Breaking, and
-string width calculation for monospace fonts. Unicode Text Segmentation conforms
-to Unicode Standard Annex #29 (https://unicode.org/reports/tr29/) and Unicode
-Line Breaking conforms to Unicode Standard Annex #14
-(https://unicode.org/reports/tr14/).
+Package runeseg implements Unicode Text Segmentation, Unicode Line Breaking, and
+string width calculation for monospace fonts.
 
-In short, using this package, you can split a string into grapheme clusters
-(what people would usually refer to as a "character"), into words, and into
-sentences. Or, in its simplest case, this package allows you to count the number
-of characters in a string, especially when it contains complex characters such
-as emojis, combining characters, or characters from Asian, Arabic, Hebrew, or
-other languages. Additionally, you can use it to implement line breaking (or
-"word wrapping"), that is, to determine where text can be broken over to the
-next line when the width of the line is not big enough to fit the entire text.
-Finally, you can use it to calculate the display width of a string for monospace
-fonts.
+This package conforms to:
+  - Unicode Standard Annex #29 (https://unicode.org/reports/tr29/) for text segmentation
+  - Unicode Standard Annex #14 (https://unicode.org/reports/tr14/) for line breaking
+  - Unicode version 17.0
+
+# Overview
+
+Using this package, you can:
+  - Split strings into grapheme clusters (user-perceived "characters")
+  - Find word and sentence boundaries
+  - Determine line break opportunities for word wrapping
+  - Calculate display width for monospace fonts
+
+This is essential for internationalized text handling, especially with emojis,
+combining characters, and scripts like Arabic, Hebrew, Indic, and East Asian languages.
 
 # Getting Started
 
-If you just want to count the number of characters in a string, you can use
-[GraphemeClusterCount]. If you want to determine the display width of a string,
-you can use [StringWidth]. If you want to iterate over a string, you can use
-[Step], [StepString], or the [Graphemes] class (more convenient but less
-performant). This will provide you with all information: grapheme clusters,
-word boundaries, sentence boundaries, line breaks, and monospace character
-widths. The specialized functions [FirstGraphemeCluster],
-[FirstGraphemeClusterInString], [FirstWord], [FirstWordInString],
-[FirstSentence], and [FirstSentenceInString] can be used if only one type of
-information is needed.
+For simple use cases:
+  - [GraphemeClusterCount] - Count user-perceived characters
+  - [StringWidth] - Get display width for monospace fonts
+
+For iteration:
+  - [Step] / [StepString] - Process text with all boundary info (recommended)
+  - [Graphemes] - Convenient iterator class
+
+For specific boundaries only:
+  - [FirstGraphemeCluster] / [FirstGraphemeClusterInString]
+  - [FirstWord] / [FirstWordInString]
+  - [FirstSentence] / [FirstSentenceInString]
+  - [FirstLineSegment] / [FirstLineSegmentInString]
 
 # Grapheme Clusters
 
-Consider the rainbow flag emoji: 🏳️‍🌈. On most modern systems, it appears as one
-character. But its string representation actually has 14 bytes, so counting
-bytes (or using len("🏳️‍🌈")) will not work as expected. Counting runes won't,
-either: The flag has 4 Unicode code points, thus 4 runes. The stdlib function
-utf8.RuneCountInString("🏳️‍🌈") and len([]rune("🏳️‍🌈")) will both return 4.
+A grapheme cluster is what users perceive as a single "character." For example,
+the family emoji 👨‍👩‍👧‍👦 appears as one character but contains 7 Unicode code points
+(25 bytes in UTF-8). Standard Go functions report misleading values:
 
-The [GraphemeClusterCount] function will return 1 for the rainbow flag emoji.
-The Graphemes class and a variety of functions in this package will allow you to
-split strings into its grapheme clusters.
+	len("👨‍👩‍👧‍👦")                    // 25 (bytes)
+	len([]rune("👨‍👩‍👧‍👦"))             // 7 (code points)
+	runeseg.GraphemeClusterCount("👨‍👩‍👧‍👦") // 1 (what users see)
+
+The [Graphemes] class and related functions correctly handle these cases.
 
 # Word Boundaries
 
-Word boundaries are used in a number of different contexts. The most familiar
-ones are selection (double-click mouse selection), cursor movement ("move to
-next word" control-arrow keys), and the dialog option "Whole Word Search" for
-search and replace. This package provides methods for determining word
-boundaries.
+Word boundaries are used for:
+  - Double-click text selection
+  - Cursor movement (Ctrl+Arrow)
+  - "Whole word" search
+  - Database proximity queries
+
+Use [FirstWord], [FirstWordInString], or check [Graphemes.IsWordBoundary].
 
 # Sentence Boundaries
 
-Sentence boundaries are often used for triple-click or some other method of
-selecting or iterating through blocks of text that are larger than single words.
-They are also used to determine whether words occur within the same sentence in
-database queries. This package provides methods for determining sentence
-boundaries.
+Sentence boundaries are used for:
+  - Triple-click text selection
+  - Text-to-speech segmentation
+  - NLP sentence tokenization
+
+Use [FirstSentence], [FirstSentenceInString], or check [Graphemes.IsSentenceBoundary].
 
 # Line Breaking
 
-Line breaking, also known as word wrapping, is the process of breaking a section
-of text into lines such that it will fit in the available width of a page,
-window or other display area. This package provides methods to determine the
-positions in a string where a line must be broken, may be broken, or must not be
-broken.
+Line breaking (word wrapping) determines where text can be broken across lines.
+The package distinguishes:
+  - Must break (after newlines)
+  - May break (between words)
+  - Must not break (within words, numbers, URLs)
+
+Use [FirstLineSegment], [FirstLineSegmentInString], or check [Graphemes.LineBreak].
+The [Step] function is preferred as it respects grapheme cluster boundaries.
 
 # Monospace Width
 
-Monospace width, as referred to in this package, is the width of a string in a
-monospace font. This is commonly used in terminal user interfaces or text
-displays or editors that don't support proportional fonts. A width of 1
-corresponds to a single character cell. The populear C function [wcswidth()] and
-its implementation in other programming languages is in widespread use for the
-same purpose. However, there is no standard for the calculation of such widths,
-and this package differs from wcswidth() in a number of ways, presumably to
-generate more visually pleasing results.
+For terminal UIs and fixed-width font rendering, characters have varying widths:
+  - Most characters: width 1
+  - East Asian wide/fullwidth (CJK): width 2
+  - Emojis: width 2 (unless text presentation)
+  - Combining marks, ZWJ, control chars: width 0
+  - Special dashes (U+2E3A, U+2E3B): width 3-4
 
-To start, we assume that every code point has a width of 1, with the following
-exceptions:
+Use [StringWidth] or [Graphemes.Width]. Configure ambiguous width handling
+with [EastAsianAmbiguousWidth].
 
-  - Code points with grapheme cluster break properties Control, CR, LF, Extend,
-    and ZWJ have a width of 0.
-  - U+2E3A, Two-Em Dash, has a width of 3.
-  - U+2E3B, Three-Em Dash, has a width of 4.
-  - Characters with the East-Asian Width properties "Fullwidth" (F) and "Wide"
-    (W) have a width of 2. "Ambiguous" (A) can be configured with
-    [EastAsianAmbiguousWidth], with a default of 1. ("Neutral" (N) always has a
-    width of 1.)
-  - Code points with grapheme cluster break property Regional Indicator have a
-    width of 2.
-  - Code points with grapheme cluster break property Extended Pictographic have
-    a width of 2, unless their Emoji Presentation flag is "No", in which case
-    the width is 1.
-
-For Hangul grapheme clusters composed of conjoining Jamo and for Regional
-Indicators (flags), all code points except the first one have a width of 0. For
-grapheme clusters starting with an Extended Pictographic, any additional code
-point will force a total width of 2, except if the Variation Selector-15
-(U+FE0E) is included, in which case the total width is always 1. Grapheme
-clusters ending with Variation Selector-16 (U+FE0F) have a width of 2.
-
-Note that whether these widths appear correct depends on your application's
-render engine, to which extent it conforms to the Unicode Standard, and its
-choice of font.
-
-[wcswidth()]: https://man7.org/linux/man-pages/man3/wcswidth.3.html
+Note: Actual rendering depends on your terminal/font. These calculations
+follow common conventions but may not match all environments.
 */
 package runeseg

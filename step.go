@@ -2,43 +2,48 @@ package runeseg
 
 import "unicode/utf8"
 
-// The bit masks used to extract boundary information returned by [Step].
+// Bit masks for extracting boundary information from [Step] return values.
+//
+// The boundaries return value is a bit-packed integer containing:
+//   - Line break (bits 0-1): LineDontBreak, LineCanBreak, or LineMustBreak
+//   - Word boundary (bit 2): 1 if word boundary, 0 otherwise
+//   - Sentence boundary (bit 3): 1 if sentence boundary, 0 otherwise
+//   - Character width (bits 4+): monospace display width
 const (
-	MaskLine     = 3
-	MaskWord     = 4
-	MaskSentence = 8
+	MaskLine     = 3 // bits 0-1: line break type
+	MaskWord     = 4 // bit 2: word boundary flag
+	MaskSentence = 8 // bit 3: sentence boundary flag
 )
 
-// The number of bits to shift the boundary information returned by [Step] to
-// obtain the monospace width of the grapheme cluster.
+// ShiftWidth is the number of bits to right-shift boundaries to get character width.
 const ShiftWidth = 4
 
-// The bit positions by which boundary flags are shifted by the [Step] function.
-// These must correspond to the Mask constants.
+// Internal bit positions for boundary flags in the boundaries return value.
 const (
-	shiftWord     = 2
-	shiftSentence = 3
-	// shiftwWidth is ShiftWidth above. No mask as these are always the remaining bits.
+	shiftWord     = 2 // Word boundary flag position
+	shiftSentence = 3 // Sentence boundary flag position
 )
 
-// The bit positions by which states are shifted by the [Step] function. These
-// values must ensure state values defined for each of the boundary algorithms
-// don't overlap (and that they all still fit in a single int). These must
-// correspond to the Mask constants.
+// Internal bit positions for packing multiple parser states into a single int.
+// The state integer layout (64 bits total):
+//   - Bits 0-11:  Grapheme state (12 bits, includes InCB tracking)
+//   - Bits 12-16: Word state (5 bits)
+//   - Bits 17-20: Sentence state (4 bits)
+//   - Bits 21-36: Line state (16 bits, context-aware system)
+//   - Bits 37+:   Cached property for next iteration
 const (
-	shiftWordState     = 12 // Grapheme state uses 12 bits (including InCB tracking)
+	shiftWordState     = 12
 	shiftSentenceState = 17
 	shiftLineState     = 21
-	shiftPropState     = 37 // Increased from 31 to accommodate 16-bit line state
+	shiftPropState     = 37
 )
 
-// The bit mask used to extract the state returned by the [Step] function, after
-// shifting. These values must correspond to the shift constants.
+// Bit masks for extracting individual parser states (after shifting).
 const (
-	maskGraphemeState = 0xfff  // 12 bits for grapheme state + InCB tracking
-	maskWordState     = 0x1f
-	maskSentenceState = 0xf
-	maskLineState     = 0xffff // 16 bits for line state (new context system: 8 bits state + 8 bits flags)
+	maskGraphemeState = 0xfff  // 12 bits: base state + InCB tracking
+	maskWordState     = 0x1f   // 5 bits
+	maskSentenceState = 0xf    // 4 bits
+	maskLineState     = 0xffff // 16 bits: 8 for state + 8 for context flags
 )
 
 // Step returns the first grapheme cluster (user-perceived character) found in
@@ -151,9 +156,10 @@ func Step(b []byte, state int) (cluster, rest []byte, boundaries int, newState i
 		}
 
 		if firstProp == prExtendedPictographic {
-			if r == vs15 {
+			switch r {
+			case vs15:
 				width = 1
-			} else if r == vs16 {
+			case vs16:
 				width = 2
 			}
 		} else if firstProp != prRegionalIndicator && firstProp != prL {
@@ -225,9 +231,10 @@ func StepString(str string, state int) (cluster, rest string, boundaries int, ne
 		}
 
 		if firstProp == prExtendedPictographic {
-			if r == vs15 {
+			switch r {
+			case vs15:
 				width = 1
-			} else if r == vs16 {
+			case vs16:
 				width = 2
 			}
 		} else if firstProp != prRegionalIndicator && firstProp != prL {

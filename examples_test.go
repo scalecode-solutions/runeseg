@@ -241,9 +241,10 @@ func ExampleStep_lineBreaking() {
 	for len(b) > 0 {
 		c, b, boundaries, state = runeseg.Step(b, state)
 		fmt.Print(string(c))
-		if boundaries&runeseg.MaskLine == runeseg.LineCanBreak {
+		switch boundaries & runeseg.MaskLine {
+		case runeseg.LineCanBreak:
 			fmt.Print("|")
-		} else if boundaries&runeseg.MaskLine == runeseg.LineMustBreak {
+		case runeseg.LineMustBreak:
 			fmt.Print("‖")
 		}
 	}
@@ -261,9 +262,10 @@ func ExampleStepString_lineBreaking() {
 	for len(str) > 0 {
 		c, str, boundaries, state = runeseg.StepString(str, state)
 		fmt.Print(c)
-		if boundaries&runeseg.MaskLine == runeseg.LineCanBreak {
+		switch boundaries & runeseg.MaskLine {
+		case runeseg.LineCanBreak:
 			fmt.Print("|")
-		} else if boundaries&runeseg.MaskLine == runeseg.LineMustBreak {
+		case runeseg.LineMustBreak:
 			fmt.Print("‖")
 		}
 	}

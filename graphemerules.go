@@ -1,29 +1,35 @@
 package runeseg
 
-// The states of the grapheme cluster parser.
+// States for the grapheme cluster parser.
+// These track the parser's position within potential grapheme clusters.
 const (
-	grAny = iota
-	grCR
-	grControlLF
-	grL
-	grLVV
-	grLVTT
-	grPrepend
-	grExtendedPictographic
-	grExtendedPictographicZWJ
-	grRIOdd
-	grRIEven
-
+	grAny                     = iota // Default/initial state
+	grCR                             // After carriage return (for GB3)
+	grControlLF                      // After control/LF character
+	grL                              // After Hangul L (leading consonant)
+	grLVV                            // After Hangul LV or V
+	grLVTT                           // After Hangul LVT or T
+	grPrepend                        // After prepend character (GB9b)
+	grExtendedPictographic           // After emoji/pictographic
+	grExtendedPictographicZWJ        // After emoji + ZWJ (for GB11)
+	grRIOdd                          // After odd number of Regional Indicators
+	grRIEven                         // After even number of Regional Indicators
 )
 
-// GB9c InCB state tracking constants (stored in upper bits of state).
-// These track the Indic conjunct break state for the GB9c rule.
+// GB9c Indic Conjunct Break (InCB) state tracking.
+// Stored in upper bits of state to track Indic scripts like Devanagari.
+//
+// GB9c prevents breaks within conjunct clusters:
+//   InCB=Consonant [InCB=Extend|Linker]* InCB=Linker [InCB=Extend|Linker]* × InCB=Consonant
+//
+// Example: क्षि (kṣi) should be kept together as one grapheme cluster.
+//
+// Values: 0x0000 = None, 0x0100 = Consonant, 0x0200 = Extend, 0x0300 = Linker
 const (
-	grInCBNone      = 0x0000 // No InCB tracking / InCB=None
-	grInCBConsonant = 0x0100 // Seen InCB=Consonant
-	grInCBExtend    = 0x0200 // Seen InCB=Consonant + [Extend]* (no Linker yet)
-	grInCBLinker    = 0x0300 // Seen InCB=Consonant + [Extend|Linker]*Linker[Extend|Linker]*
-	grInCBMask      = 0x0F00 // Mask for extracting InCB state
+	grInCBConsonant = 0x0100 // After InCB=Consonant (e.g., क)
+	grInCBExtend    = 0x0200 // After Consonant + Extend* (no Linker yet)
+	grInCBLinker    = 0x0300 // After Consonant + [Extend|Linker]*Linker (e.g., क्)
+	grInCBMask      = 0x0F00 // Bit mask to extract InCB state
 )
 
 // The grapheme cluster parser's breaking instructions.
@@ -32,22 +38,21 @@ const (
 	grBoundary
 )
 
-// grTransitions implements the grapheme cluster parser's state transitions.
-// Maps state and property to a new state, a breaking instruction, and rule
-// number. The breaking instruction always refers to the boundary between the
-// last and next code point. Returns negative values if no transition is found.
+// grTransitions implements grapheme cluster boundary rules from UAX #29.
 //
-// This function is used as follows:
+// Given current state and next character's property, returns:
+//   - newState: the next parser state
+//   - newProp: breaking instruction (grBoundary or grNoBoundary)
+//   - rule: the rule number that matched (for conflict resolution)
 //
-//  1. Find specific state + specific property. Stop if found.
-//  2. Find specific state + any property.
-//  3. Find any state + specific property.
-//  4. If only (2) or (3) (but not both) was found, stop.
-//  5. If both (2) and (3) were found, use state from (3) and breaking instruction
-//     from the transition with the lower rule number, prefer (3) if rule numbers
-//     are equal. Stop.
-//  6. Assume grAny and grBoundary.
+// Transition resolution order:
+//  1. Exact match (specific state + specific property)
+//  2. State wildcard (specific state + any property)
+//  3. Property wildcard (any state + specific property)
+//  4. If both wildcards match, use lower rule number to decide break
+//  5. Default: grAny state with boundary
 //
+// Unicode Standard Annex #29 (https://unicode.org/reports/tr29/)
 // Unicode version 17.0.0.
 func grTransitions(state, prop int) (newState int, newProp int, boundary int) {
 	// It turns out that using a big switch statement is much faster than using
@@ -209,13 +214,14 @@ func transitionGraphemeState(state int, r rune) (newState, prop int, boundary bo
 
 	case incbProp == prInCBExtend:
 		// We're seeing an extend character.
-		if incbState == grInCBConsonant {
+		switch incbState {
+		case grInCBConsonant:
 			// Still in extend phase after consonant (no linker yet).
 			newState = newState | grInCBExtend
-		} else if incbState == grInCBExtend {
+		case grInCBExtend:
 			// Continue in extend phase.
 			newState = newState | grInCBExtend
-		} else if incbState == grInCBLinker {
+		case grInCBLinker:
 			// After linker, extends are allowed.
 			newState = newState | grInCBLinker
 		}

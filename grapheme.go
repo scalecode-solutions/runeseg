@@ -110,9 +110,10 @@ func (g *Graphemes) Bytes() []byte {
 // the original string "str". If [Graphemes.Next] has not yet been called, both
 // values are 0. If the iterator is already past the end, both values are 1.
 func (g *Graphemes) Positions() (int, int) {
-	if g.state == -1 {
+	switch g.state {
+	case -1:
 		return 0, 0
-	} else if g.state == -2 {
+	case -2:
 		return 1, 1
 	}
 	return g.offset, g.offset + len(g.cluster)
@@ -197,12 +198,14 @@ func ReverseString(s string) string {
 	return string(reversed)
 }
 
-// The number of bits the grapheme property must be shifted to make place for
-// grapheme states. This includes 4 bits for base state + 4 bits for InCB tracking.
+// shiftGraphemePropState is the number of bits to shift the grapheme property
+// to make room for the grapheme state. The state uses 12 bits:
+//   - 8 bits for base state (grAny, grCR, etc.)
+//   - 4 bits for InCB tracking (Indic conjunct clusters, GB9c)
 const shiftGraphemePropState = 12
 
-// Mask for extracting the full grapheme state including InCB tracking bits.
-// This is used by the grapheme-only functions (not Step).
+// maskGraphemeStateWithInCB extracts the full grapheme state including InCB bits.
+// Used by FirstGraphemeCluster and FirstGraphemeClusterInString.
 const maskGraphemeStateWithInCB = 0xfff
 
 // FirstGraphemeCluster returns the first grapheme cluster found in the given
@@ -272,9 +275,10 @@ func FirstGraphemeCluster(b []byte, state int) (cluster, rest []byte, width, new
 		}
 
 		if firstProp == prExtendedPictographic {
-			if r == vs15 {
+			switch r {
+			case vs15:
 				width = 1
-			} else if r == vs16 {
+			case vs16:
 				width = 2
 			}
 		} else if firstProp != prRegionalIndicator && firstProp != prL {
@@ -332,9 +336,10 @@ func FirstGraphemeClusterInString(str string, state int) (cluster, rest string, 
 		}
 
 		if firstProp == prExtendedPictographic {
-			if r == vs15 {
+			switch r {
+			case vs15:
 				width = 1
-			} else if r == vs16 {
+			case vs16:
 				width = 2
 			}
 		} else if firstProp != prRegionalIndicator && firstProp != prL {

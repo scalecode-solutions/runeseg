@@ -601,16 +601,17 @@ func transitionLineBreakState(state int, r rune, b []byte, str string) (newState
 		}
 	}()
 
-	// LB1.
-	if nextProperty == prAI || nextProperty == prSG || nextProperty == prXX {
+	// LB1: Resolve ambiguous properties.
+	switch nextProperty {
+	case prAI, prSG, prXX:
 		nextProperty = prAL
-	} else if nextProperty == prSA {
+	case prSA:
 		if generalCategory == gcMn || generalCategory == gcMc {
 			nextProperty = prCM
 		} else {
 			nextProperty = prAL
 		}
-	} else if nextProperty == prCJ {
+	case prCJ:
 		nextProperty = prNS
 	}
 
@@ -687,9 +688,10 @@ func transitionLineBreakState(state int, r rune, b []byte, str string) (newState
 	// LB20a.1: ^(HY | HH) CM* (AL | HL) - word-initial hyphen only at sot
 	// Only applies at the absolute start of text
 	if isSot && (state == lbHY || state == lbHH) {
-		if nextProperty == prAL {
+		switch nextProperty {
+		case prAL:
 			return lbAL, LineDontBreak
-		} else if nextProperty == prHL {
+		case prHL:
 			return lbHL, LineDontBreak
 		}
 	}
@@ -699,7 +701,7 @@ func transitionLineBreakState(state int, r rune, b []byte, str string) (newState
 	if rule >= 180 && nextProperty == prQU && generalCategory == gcPf {
 		if state == lbSP || state == lbQUSP || state == lbCLCPSP || state == lbB2SP || state == lbQUPiSP {
 			// Check if this QU_Pf is at eot (end of text)
-			isEot := (b == nil || len(b) == 0) && str == ""
+			isEot := len(b) == 0 && str == ""
 			if isEot {
 				return lbQU, LineDontBreak
 			}

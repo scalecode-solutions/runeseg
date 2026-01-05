@@ -2,29 +2,34 @@ package runeseg
 
 import "unicode/utf8"
 
-// The states of the word break parser.
+// States for the word break parser.
+// These track the parser's position within potential word boundaries.
 const (
-	wbAny = iota
-	wbCR
-	wbLF
-	wbNewline
-	wbWSegSpace
-	wbHebrewLetter
-	wbALetter
-	wbWB7
-	wbWB7c
-	wbNumeric
-	wbWB11
-	wbKatakana
-	wbExtendNumLet
-	wbOddRI
-	wbEvenRI
-	wbZWJBit = 16 // This bit is set for any states followed by at least one zero-width joiner (see WB4 and WB3c).
+	wbAny          = iota // Default/initial state
+	wbCR                  // After carriage return (for WB3)
+	wbLF                  // After line feed
+	wbNewline             // After newline character
+	wbWSegSpace           // After whitespace segment (for WB3d)
+	wbHebrewLetter        // After Hebrew letter (for WB7a-c)
+	wbALetter             // After alphabetic letter
+	wbWB7                 // Mid-word state for WB7 (MidLetter seen)
+	wbWB7c                // Mid-word state for WB7c (Hebrew + DoubleQuote)
+	wbNumeric             // After numeric character
+	wbWB11                // Mid-number state for WB11 (MidNum seen)
+	wbKatakana            // After Katakana character
+	wbExtendNumLet        // After ExtendNumLet (underscore, etc.)
+	wbOddRI               // After odd number of Regional Indicators
+	wbEvenRI              // After even number of Regional Indicators
+
+	// wbZWJBit is set when Zero Width Joiner was seen (for WB3c and WB4).
+	// Combined with state using bitwise OR.
+	wbZWJBit = 16
 )
 
-// wbTransitions implements the word break parser's state transitions. It's
-// anologous to [grTransitions], see comments there for details.
+// wbTransitions implements word boundary rules from UAX #29.
+// See [grTransitions] for details on the transition table approach.
 //
+// Unicode Standard Annex #29 (https://unicode.org/reports/tr29/)
 // Unicode version 17.0.0.
 func wbTransitions(state, prop int) (newState int, wordBreak bool, rule int) {
 	switch uint64(state) | uint64(prop)<<32 {

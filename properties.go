@@ -1,156 +1,168 @@
 package runeseg
 
-// The Unicode properties as used in the various parsers. Only the ones needed
-// in the context of this package are included.
+// Unicode properties used by the text segmentation parsers.
+// Properties from UAX #29 (grapheme/word/sentence) and UAX #14 (line break).
+//
+// Note: Grapheme properties come first to minimize bits in state vectors.
 const (
-	prXX      = 0    // Same as prAny.
-	prAny     = iota // prAny must be 0.
-	prPrepend        // Grapheme properties must come first, to reduce the number of bits stored in the state vector.
-	prCR
-	prLF
-	prControl
-	prExtend
-	prRegionalIndicator
-	prSpacingMark
-	prL
-	prV
-	prT
-	prLV
-	prLVT
-	prZWJ
-	prExtendedPictographic
-	prNewline
-	prWSegSpace
-	prDoubleQuote
-	prSingleQuote
-	prMidNumLet
-	prNumeric
-	prMidLetter
-	prMidNum
-	prExtendNumLet
-	prALetter
-	prFormat
-	prHebrewLetter
-	prKatakana
-	prSp
-	prSTerm
-	prClose
-	prSContinue
-	prATerm
-	prUpper
-	prLower
-	prSep
-	prOLetter
-	prCM
-	prBA
-	prBK
-	prSP
-	prEX
-	prQU
-	prAL
-	prPR
-	prPO
-	prOP
-	prCP
-	prIS
-	prHY
-	prSY
-	prNU
-	prCL
-	prNL
-	prGL
-	prAI
-	prBB
-	prHL
-	prSA
-	prJL
-	prJV
-	prJT
-	prNS
-	prZW
-	prB2
-	prIN
-	prWJ
-	prID
-	prEB
-	prCJ
-	prH2
-	prH3
-	prSG
-	prCB
-	prRI
-	prEM
-	prN
-	prNa
-	prA
-	prW
-	prH
-	prF
-	prEmojiPresentation
+	prXX      = 0    // Unknown/unassigned (same as prAny)
+	prAny     = iota // Default/any property (must be 0)
 
-	// Combined property: ALetter that is also Extended_Pictographic (for WB3.3)
+	// Grapheme Cluster Break properties (UAX #29)
+	prPrepend           // Characters that don't break before following char
+	prCR                // Carriage return
+	prLF                // Line feed
+	prControl           // Control characters
+	prExtend            // Extending characters (combining marks)
+	prRegionalIndicator // Flag emoji components (paired)
+	prSpacingMark       // Spacing combining marks
+	prL                 // Hangul leading consonant (Jamo L)
+	prV                 // Hangul vowel (Jamo V)
+	prT                 // Hangul trailing consonant (Jamo T)
+	prLV                // Hangul syllable LV
+	prLVT               // Hangul syllable LVT
+	prZWJ               // Zero Width Joiner
+	prExtendedPictographic // Emoji and pictographic characters
+
+	// Word Break properties (UAX #29)
+	prNewline      // Newline characters
+	prWSegSpace    // Whitespace for WB3d
+	prDoubleQuote  // Double quotation mark
+	prSingleQuote  // Single quotation mark (apostrophe)
+	prMidNumLet    // Mid-word/number (e.g., period, colon)
+	prNumeric      // Numeric digits
+	prMidLetter    // Mid-letter (e.g., middle dot)
+	prMidNum       // Mid-number (e.g., comma in numbers)
+	prExtendNumLet // Underscore and similar
+	prALetter      // Alphabetic letters
+	prFormat       // Format characters
+	prHebrewLetter // Hebrew letters
+	prKatakana     // Japanese Katakana
+
+	// Sentence Break properties (UAX #29)
+	prSp        // Space
+	prSTerm     // Sentence terminal (! ?)
+	prClose     // Close punctuation
+	prSContinue // Sentence continue
+	prATerm     // Ambiguous terminal (.)
+	prUpper     // Uppercase letters
+	prLower     // Lowercase letters
+	prSep       // Paragraph separator
+	prOLetter   // Other letters
+
+	// Line Break properties (UAX #14)
+	prCM // Combining Mark
+	prBA // Break After
+	prBK // Mandatory Break
+	prSP // Space
+	prEX // Exclamation
+	prQU // Quotation
+	prAL // Ordinary Alphabetic
+	prPR // Prefix Numeric
+	prPO // Postfix Numeric
+	prOP // Open Punctuation
+	prCP // Close Parenthesis
+	prIS // Infix Separator
+	prHY // Hyphen
+	prSY // Break Symbols
+	prNU // Numeric
+	prCL // Close Punctuation
+	prNL // Next Line
+	prGL // Non-breaking (Glue)
+	prAI // Ambiguous (treated as AL)
+	prBB // Break Before
+	prHL // Hebrew Letter
+	prSA // Complex Context (South Asian)
+	prJL // Hangul L Jamo
+	prJV // Hangul V Jamo
+	prJT // Hangul T Jamo
+	prNS // Nonstarter
+	prZW // Zero Width Space
+	prB2 // Break Opportunity Before and After
+	prIN // Inseparable
+	prWJ // Word Joiner
+	prID // Ideographic
+	prEB // Emoji Base
+	prCJ // Conditional Japanese Starter
+	prH2 // Hangul LV Syllable
+	prH3 // Hangul LVT Syllable
+	prSG // Surrogate (treat as AL)
+	prCB // Contingent Break
+	prRI // Regional Indicator
+	prEM // Emoji Modifier
+
+	// East Asian Width properties (UAX #11)
+	prN  // Neutral
+	prNa // Narrow
+	prA  // Ambiguous
+	prW  // Wide
+	prH  // Halfwidth
+	prF  // Fullwidth
+	prEmojiPresentation // Has emoji presentation by default
+
+	// Combined property for WB3.3: ALetter that is also Extended_Pictographic
 	prALetterExtPict
 
-	// New Line_Break properties added in Unicode 16.0/17.0
-	prAK // Aksara - Brahmic script letters
-	prAP // Aksara_Prebase - Prebase letters
-	prAS // Aksara_Start - Aksara starting characters
-	prVF // Virama_Final - Final viramas
-	prVI // Virama - Virama characters
-	prHH // Unambiguous_Hyphen - Unicode 17.0
+	// Unicode 17.0 Line Break properties for Brahmic/Aksara scripts (LB28a)
+	prAK // Aksara - letters that form conjuncts
+	prAP // Aksara_Prebase - prebase combining characters
+	prAS // Aksara_Start - consonants that start syllables
+	prVF // Virama_Final - final/spacing viramas
+	prVI // Virama - combining viramas
+	prHH // Unambiguous_Hyphen - non-breaking hyphen (Unicode 17.0, LB20.1)
 
-	// Indic_Conjunct_Break property values for GB9c rule
-	prInCBNone      // Default
-	prInCBLinker    // Viramas
-	prInCBConsonant // Consonants
-	prInCBExtend    // Extend characters in conjuncts
+	// Indic_Conjunct_Break property values for grapheme rule GB9c
+	prInCBNone      // Default - not part of conjunct
+	prInCBLinker    // Virama - links consonants in conjuncts
+	prInCBConsonant // Consonant - can form conjuncts
+	prInCBExtend    // Extend - extends within conjuncts
 )
 
-// Unicode General Categories. Only the ones needed in the context of this
-// package are included.
+// Unicode General Categories needed for segmentation decisions.
+// Used primarily for distinguishing quotation mark types (Pi/Pf) in line breaking.
 const (
-	gcNone = iota // gcNone must be 0.
-	gcCc
-	gcZs
-	gcPo
-	gcSc
-	gcPs
-	gcPe
-	gcSm
-	gcPd
-	gcNd
-	gcLu
-	gcSk
-	gcPc
-	gcLl
-	gcSo
-	gcLo
-	gcPi
-	gcCf
-	gcNo
-	gcPf
-	gcLC
-	gcLm
-	gcMn
-	gcMe
-	gcMc
-	gcNl
-	gcZl
-	gcZp
-	gcCn
-	gcCs
-	gcCo
+	gcNone = iota // Unknown/default (must be 0)
+	gcCc          // Control
+	gcZs          // Space Separator
+	gcPo          // Other Punctuation
+	gcSc          // Currency Symbol
+	gcPs          // Open Punctuation
+	gcPe          // Close Punctuation
+	gcSm          // Math Symbol
+	gcPd          // Dash Punctuation
+	gcNd          // Decimal Number
+	gcLu          // Uppercase Letter
+	gcSk          // Modifier Symbol
+	gcPc          // Connector Punctuation
+	gcLl          // Lowercase Letter
+	gcSo          // Other Symbol
+	gcLo          // Other Letter
+	gcPi          // Initial Punctuation (opening quotes like «)
+	gcCf          // Format
+	gcNo          // Other Number
+	gcPf          // Final Punctuation (closing quotes like »)
+	gcLC          // Cased Letter
+	gcLm          // Modifier Letter
+	gcMn          // Nonspacing Mark
+	gcMe          // Enclosing Mark
+	gcMc          // Spacing Mark
+	gcNl          // Letter Number
+	gcZl          // Line Separator
+	gcZp          // Paragraph Separator
+	gcCn          // Unassigned
+	gcCs          // Surrogate
+	gcCo          // Private Use
 )
 
-// Special code points.
+// Variation Selectors for emoji presentation control.
 const (
-	vs15 = 0xfe0e // Variation Selector-15 (text presentation)
-	vs16 = 0xfe0f // Variation Selector-16 (emoji presentation)
+	vs15 = 0xfe0e // Variation Selector-15: force text presentation (width 1)
+	vs16 = 0xfe0f // Variation Selector-16: force emoji presentation (width 2)
 )
 
-// propertySearch performs a binary search on a property slice and returns the
-// entry whose range (start = first array element, end = second array element)
-// includes r, or an array of 0's if no such entry was found.
+// propertySearch performs a binary search on a sorted property table.
+// Each entry is [startCodePoint, endCodePoint, property, ...].
+// Returns the matching entry, or zero-initialized entry if not found.
 func propertySearch[E interface{ [3]int | [4]int }](dictionary []E, r rune) (result E) {
 	// Run a binary search.
 	from := 0
