@@ -1,6 +1,17 @@
 MIT License
 
-Copyright (c) 2019 Oliver Kuederle
+================================================================================
+runeseg - Unicode Text Segmentation for Go
+================================================================================
+
+Copyright (c) 2026 Travis Jon Marquis
+
+This software includes modifications and enhancements to code originally
+developed by Oliver Kuederle (github.com/rivo/uniseg), which is also licensed
+under the MIT License. Both the original work and the modifications are
+provided under the terms below.
+
+================================================================================
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -19,3 +30,39 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+================================================================================
+
+ADDITIONAL INFORMATION:
+
+This license grants you the right to:
+  - Use this software for any purpose, commercial or non-commercial
+  - Modify the source code to suit your needs
+  - Distribute original or modified versions
+  - Incorporate this software into proprietary applications
+  - Sublicense the software under different terms
+
+The only requirements are:
+  - Include this license and copyright notice in copies or substantial
+    portions of the Software
+  - Acknowledge that the software is provided "as is" without warranty
+
+For the complete license text and more information about the MIT License,
+visit: https://opensource.org/licenses/MIT
+
+================================================================================
+
+Original Work Attribution:
+  github.com/rivo/uniseg
+  Copyright (c) 2019 Oliver Kuederle
+  Licensed under the MIT License
+
+Modifications and Enhancements (2026):
+  - Updated to Unicode 17.0 standard
+  - Added support for Indic Conjunct breaking (GB9c rule)
+  - Added support for Aksara line breaking (LB28a rule)
+  - Improved hyphen handling (LB20.1 rule)
+  - Refactored line breaking state machine architecture
+  - Enhanced test coverage and documentation
+
+================================================================================
