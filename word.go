@@ -55,7 +55,7 @@ func FirstWord(b []byte, state int) (word, rest []byte, newState int) {
 
 // FirstWordInString is like [FirstWord] but its input and outputs are strings.
 func FirstWordInString(str string, state int) (word, rest string, newState int) {
-	// An empty byte slice returns nothing.
+	// An empty string returns nothing.
 	if len(str) == 0 {
 		return
 	}

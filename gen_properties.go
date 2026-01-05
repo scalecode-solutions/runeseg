@@ -6,15 +6,15 @@
 //  1. The name of the Unicode data file (just the filename, without extension).
 //     Can be "-" (to skip) if the emoji flag is included.
 //  2. The name of the locally generated Go file.
-//  3. The name of the slice mapping code points to properties.
+//  3. The name of the slice variable mapping code points to properties.
 //  4. The name of the generator, for logging purposes.
 //  5. (Optional) Flags, comma-separated. The following flags are available:
-//     - "emojis=<property>": include the specified emoji properties (e.g.
-//     "Extended_Pictographic").
-//     - "gencat": include general category properties.
+//     - "emojis=<property>": Include the specified emoji properties from
+//     emoji-data.txt (e.g. "Extended_Pictographic").
+//     - "gencat": Include general category properties extracted from comments.
 //
 //go:generate go run gen_properties.go auxiliary/GraphemeBreakProperty graphemeproperties.go graphemeCodePoints graphemes emojis=Extended_Pictographic
-//go:generate go run gen_properties.go auxiliary/WordBreakProperty wordproperties.go workBreakCodePoints words emojis=Extended_Pictographic
+//go:generate go run gen_properties.go auxiliary/WordBreakProperty wordproperties.go wordBreakCodePoints words emojis=Extended_Pictographic
 //go:generate go run gen_properties.go auxiliary/SentenceBreakProperty sentenceproperties.go sentenceBreakCodePoints sentences
 //go:generate go run gen_properties.go LineBreak lineproperties.go lineBreakCodePoints lines gencat
 //go:generate go run gen_properties.go EastAsianWidth eastasianwidth.go eastAsianWidth eastasianwidth
@@ -94,7 +94,7 @@ func main() {
 }
 
 // parse parses the Unicode Properties text files located at the given URLs and
-// returns their equivalent Go source code to be used in the uniseg package. If
+// returns their equivalent Go source code to be used in the runeseg package. If
 // "emojiProperty" is not an empty string, emoji code points for that emoji
 // property (e.g. "Extended_Pictographic") will be included. In those cases, you
 // may pass an empty "propertyURL" to skip parsing the main properties file. If

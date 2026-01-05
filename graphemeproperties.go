@@ -7,7 +7,7 @@ package runeseg
 // and
 // https://unicode.org/Public/17.0.0/ucd/emoji/emoji-data.txt
 // ("Extended_Pictographic" only)
-// on January 4, 2026. See https://www.unicode.org/license.html for the Unicode
+// on January 5, 2026. See https://www.unicode.org/license.html for the Unicode
 // license agreement.
 var graphemeCodePoints = [][3]int{
 	{0x0000, 0x0009, prControl},                // Cc  [10] <control-0000>..<control-0009>

@@ -165,7 +165,7 @@ func wbTransitions(state, prop int) (newState int, wordBreak bool, rule int) {
 // can be used (whichever is not nil or empty) for further lookups.
 func transitionWordBreakState(state int, r rune, b []byte, str string) (newState int, wordBreak bool) {
 	// Determine the property of the next character.
-	nextProperty := property(workBreakCodePoints, r)
+	nextProperty := property(wordBreakCodePoints, r)
 
 	// "Replacing Ignore Rules".
 	if nextProperty == prZWJ {
@@ -254,7 +254,7 @@ func transitionWordBreakState(state int, r rune, b []byte, str string) (newState
 			if r == utf8.RuneError {
 				break
 			}
-			prop := property(workBreakCodePoints, r)
+			prop := property(wordBreakCodePoints, r)
 			if prop == prExtend || prop == prFormat || prop == prZWJ {
 				continue
 			}

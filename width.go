@@ -1,8 +1,9 @@
 package runeseg
 
 // EastAsianAmbiguousWidth specifies the monospace width for East Asian
-// characters classified as Ambiguous. The default is 1 but some rare fonts
-// render them with a width of 2.
+// characters classified as Ambiguous (width class "A" in Unicode). The default
+// is 1, but some fonts (particularly in East Asian locales) render them with a
+// width of 2. Adjust this value based on your target environment.
 var EastAsianAmbiguousWidth = 1
 
 // runeWidth returns the monospace width for the given rune. The provided
@@ -49,7 +50,10 @@ func runeWidth(r rune, graphemeProperty int) int {
 }
 
 // StringWidth returns the monospace width for the given string, that is, the
-// number of same-size cells to be occupied by the string.
+// number of same-size terminal cells to be occupied by the string. This is
+// useful for aligning text in terminal applications and calculating display
+// widths for Unicode strings containing wide characters, emoji, and combining
+// marks.
 func StringWidth(s string) (width int) {
 	state := -1
 	for len(s) > 0 {
