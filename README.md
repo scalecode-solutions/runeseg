@@ -155,6 +155,36 @@ This package is designed for high performance:
 - **Efficient state machine** implementation
 - **No external dependencies**
 
+## Migrating from uniseg
+
+This package is a **drop-in replacement** for [github.com/rivo/uniseg](https://github.com/rivo/uniseg). The API is 100% compatible—only the import path changes:
+
+```go
+// Before
+import "github.com/rivo/uniseg"
+count := uniseg.GraphemeClusterCount(s)
+
+// After
+import "github.com/scalecode-solutions/runeseg"
+count := runeseg.GraphemeClusterCount(s)
+```
+
+### What's Different?
+
+| | uniseg | runeseg |
+|---|--------|---------|
+| Unicode Version | 15.0 | **17.0** |
+| Indic Conjuncts (GB9c) | ❌ | ✅ |
+| Aksara Line Breaking (LB28a) | ❌ | ✅ |
+| Unambiguous Hyphen (LB20.1) | ❌ | ✅ |
+| API | Original | **Identical** |
+
+### Why Switch?
+
+- **Unicode 17.0** — Latest standard with improved Indic and Southeast Asian script support
+- **Better Line Breaking** — Refactored state machine with 99.85% Unicode conformance
+- **Same API** — No code changes beyond the import path
+
 ## Attribution
 
 This package is based on [github.com/rivo/uniseg](https://github.com/rivo/uniseg) by Oliver Kuederle, updated to Unicode 17.0 with architectural improvements. The original work is licensed under MIT.

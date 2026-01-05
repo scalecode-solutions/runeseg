@@ -90,5 +90,19 @@ with [EastAsianAmbiguousWidth].
 
 Note: Actual rendering depends on your terminal/font. These calculations
 follow common conventions but may not match all environments.
+
+# Migrating from uniseg
+
+This package is a drop-in replacement for github.com/rivo/uniseg. The API is
+100% compatible—only the import path changes:
+
+	// Before
+	import "github.com/rivo/uniseg"
+
+	// After
+	import "github.com/scalecode-solutions/runeseg"
+
+Key improvements over uniseg: Unicode 17.0 support, Indic conjunct handling
+(GB9c), Aksara line breaking (LB28a), and improved hyphen handling (LB20.1).
 */
 package runeseg
