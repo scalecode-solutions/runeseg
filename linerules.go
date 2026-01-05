@@ -64,15 +64,8 @@ const (
 	lbSotBit       = 512 // Start of text bit for LB15.1
 )
 
-// These constants define whether a given text may be broken into the next line.
-// If the break is optional (LineCanBreak), you may choose to break or not based
-// on your own criteria, for example, if the text has reached the available
-// width.
-const (
-	LineDontBreak = iota // You may not break the line here.
-	LineCanBreak         // You may or may not break the line here.
-	LineMustBreak        // You must break the line here.
-)
+// Line break constants (LineDontBreak, LineCanBreak, LineMustBreak) are now
+// defined in linebreak.go to be shared across old and new line breaking systems.
 
 // lbTransitions implements the line break parser's state transitions. It's
 // anologous to [grTransitions], see comments there for details.
